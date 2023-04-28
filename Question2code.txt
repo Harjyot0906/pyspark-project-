@@ -1,0 +1,183 @@
+scala> val csvFile="C:/Users/mindsdet107/Downloads/covid.csv"
+csvFile: String = C:/Users/mindsdet107/Downloads/covid.csv
+
+scala> val covidDF=(spark.read.option("sep",",").option("header","true").option("inferSchema","true").csv(csvFile))
+covidDF: org.apache.spark.sql.DataFrame = [Date: int, Month: int ... 8 more fields]
+
+scala> covidDF.show()
++----+-----+----+-----+------+--------------------+----+----------+---------+----+
+|Date|Month|Year|Cases|Deaths|             Country|Code|Population|Continent|Rate|
++----+-----+----+-----+------+--------------------+----+----------+---------+----+
+|  31|   12|2019|    0|     0|         Afghanistan| AFG|  38041757|     Asia| 0.0|
+|  31|   12|2019|    0|     0|             Algeria| DZA|  43053054|   Africa| 0.0|
+|  31|   12|2019|    0|     0|             Armenia| ARM|   2957728|   Europe| 0.0|
+|  31|   12|2019|    0|     0|           Australia| AUS|  25203200|  Oceania| 0.0|
+|  31|   12|2019|    0|     0|             Austria| AUT|   8858775|   Europe| 0.0|
+|  31|   12|2019|    0|     0|          Azerbaijan| AZE|  10047719|   Europe| 0.0|
+|  31|   12|2019|    0|     0|             Bahrain| BHR|   1641164|     Asia| 0.0|
+|  31|   12|2019|    0|     0|             Belarus| BLR|   9452409|   Europe| 0.0|
+|  31|   12|2019|    0|     0|             Belgium| BEL|  11455519|   Europe| 0.0|
+|  31|   12|2019|    0|     0|              Brazil| BRA| 211049519|  America| 0.0|
+|  31|   12|2019|    0|     0|            Cambodia| KHM|  16486542|     Asia| 0.0|
+|  31|   12|2019|    0|     0|              Canada| CAN|  37411038|  America| 0.0|
+|  31|   12|2019|    0|     0|Cases_on_an_inter...|null|        -1|    Other| 0.0|
+|  31|   12|2019|   27|     0|               China| CHN|1433783692|     Asia| 0.0|
+|  31|   12|2019|    0|     0|             Croatia| HRV|   4076246|   Europe| 0.0|
+|  31|   12|2019|    0|     0|             Czechia| CZE|  10649800|   Europe| 0.0|
+|  31|   12|2019|    0|     0|             Denmark| DNK|   5806081|   Europe| 0.0|
+|  31|   12|2019|    0|     0|  Dominican_Republic| DOM|  10738957|  America| 0.0|
+|  31|   12|2019|    0|     0|             Ecuador| ECU|  17373657|  America| 0.0|
+|  31|   12|2019|    0|     0|               Egypt| EGY| 100388076|   Africa| 0.0|
++----+-----+----+-----+------+--------------------+----+----------+---------+----+
+only showing top 20 rows
+
+scala> covidDF.createOrReplaceTempView("covid")
+
+1
+scala> spark.sql("select Count(Distinct(Country)) from covid where cases>500").show()
++-----------------------+
+
+|count(DISTINCT Country)|
++-----------------------+
+|              	    108 |
++-----------------------+
+
+2
+scala> spark.sql("select Code,Deaths from covid where Deaths<0").show()
++----+------+
+|Code|Deaths|
++----+------+
+| ESP| -1918|
+| ITA|   -31|
+| CZE|    -1|
+| CZE|    -3|
+| XKX|   -12|
+| ESP|    -2|
+| KGZ|  -443|
+| IRL|    -5|
++----+------+
+
+
+3
+scala> spark.sql("select concat(Date,'-',Month,'-',Year) as date from covid where Rate=(select max(Rate) from covid)").show()
++---------+
+|     date|
++---------+
+|2-11-2020|
++---------+
+
+
+4
+scala> spark.sql("select Month,Deaths from covid where Deaths=(select min(Deaths) from covid)").show()
++-----+------+
+|Month|Deaths|
++-----+------+
+|    5| -1918|
++-----+------+
+
+
+5
+scala> spark.sql("select country from covid where Population<50000 group by Country").show()
++--------------------+
+|             country|
++--------------------+
+|            Anguilla|
+|Cases_on_an_inter...|
+|          San_Marino|
+|          Montserrat|
+|Turks_and_Caicos_...|
+|            Holy_See|
+|   Wallis_and_Futuna|
+|Bonaire, Saint Eu...|
+|       Liechtenstein|
+|              Monaco|
+|       Faroe_Islands|
+|           Gibraltar|
+|Falkland_Islands_...|
+|British_Virgin_Is...|
+|        Sint_Maarten|
++--------------------+
+
+
+6
+
+scala> spark.sql("select concat(Date,'-',Month,'-',Year) as date from covid where Continent='Oceania' and Deaths>20 and Deaths<50").show()
++---------+
+|     date|
++---------+
+|13-8-2020|
+|18-8-2020|
+|27-8-2020|
+|28-8-2020|
+| 1-9-2020|
++---------+
+
+7
+scala> spark.sql("select Country,Cases,Deaths,Rate from covid where Continent='Asia'").show(50)
++--------------------+-----+------+----+
+|             Country|Cases|Deaths|Rate|
++--------------------+-----+------+----+
+|         Afghanistan|    0|     0| 0.0|
+|             Bahrain|    0|     0| 0.0|
+|            Cambodia|    0|     0| 0.0|
+|               China|   27|     0| 0.0|
+|               India|    0|     0| 0.0|
+|           Indonesia|    0|     0| 0.0|
+|                Iran|    0|     0| 0.0|
+|                Iraq|    0|     0| 0.0|
+|              Israel|    0|     0| 0.0|
+|               Japan|    0|     0| 0.0|
+|              Kuwait|    0|     0| 0.0|
+|             Lebanon|    0|     0| 0.0|
+|            Malaysia|    0|     0| 0.0|
+|               Nepal|    0|     0| 0.0|
+|                Oman|    0|     0| 0.0|
+|            Pakistan|    0|     0| 0.0|
+|         Philippines|    0|     0| 0.0|
+|               Qatar|    0|     0| 0.0|
+|           Singapore|    0|     0| 0.0|
+|         South_Korea|    0|     0| 0.0|
+|           Sri_Lanka|    0|     0| 0.0|
+|              Taiwan|    0|     0| 0.0|
+|            Thailand|    0|     0| 0.0|
+|United_Arab_Emirates|    0|     0| 0.0|
+|             Vietnam|    0|     0| 0.0|
+|         Afghanistan|    0|     0| 0.0|
+|             Bahrain|    0|     0| 0.0|
+|            Cambodia|    0|     0| 0.0|
+|               China|    0|     0| 0.0|
+|               India|    0|     0| 0.0|
+|           Indonesia|    0|     0| 0.0|
+|                Iran|    0|     0| 0.0|
+|                Iraq|    0|     0| 0.0|
+|              Israel|    0|     0| 0.0|
+|               Japan|    0|     0| 0.0|
+|              Kuwait|    0|     0| 0.0|
+|             Lebanon|    0|     0| 0.0|
+|            Malaysia|    0|     0| 0.0|
+|               Nepal|    0|     0| 0.0|
+|                Oman|    0|     0| 0.0|
+|            Pakistan|    0|     0| 0.0|
+|         Philippines|    0|     0| 0.0|
+|               Qatar|    0|     0| 0.0|
+|           Singapore|    0|     0| 0.0|
+|         South_Korea|    0|     0| 0.0|
+|           Sri_Lanka|    0|     0| 0.0|
+|              Taiwan|    0|     0| 0.0|
+|            Thailand|    0|     0| 0.0|
+|United_Arab_Emirates|    0|     0| 0.0|
+|             Vietnam|    0|     0| 0.0|
++--------------------+-----+------+----+
+only showing top 50 rows
+
+
+8
+scala> 
+spark.sql("select Country,Continent,Population from covid where concat(Date,'-'Month,'-',Year)='24-5-2020' and Population in (Select max(Population) from covid) and Population in (Select min(Population) from covid)").show()
++--------+---------+----------+
+| Country|Continent|Population|
++--------+---------+----------+
+|        |         |          |
++--------+---------+----------+
+
+This last Query have empty table just because the query is itself contraditing itself and min and max Population value wont be there for the same country and Continent .
